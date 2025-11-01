@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Arc Android: Video Fullscreen (No Rotation) ➜ File Picker</title>
+<title>Arc Android: Fullscreen + File Picker Bersamaan</title>
 <style>
   body{
     margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
@@ -29,14 +29,15 @@
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Arc Android — Fullscreen Video (No Rotation)</h1>
-    <p>Tap tombol: video masuk fullscreen dalam mode portrait (tanpa rotasi), lalu 1 detik kemudian buka file picker.</p>
+    <h1>Arc Android — Fullscreen + File Picker</h1>
+    <p>Tap tombol untuk langsung fullscreen (video) dan membuka file picker bersamaan.</p>
 
-    <button id="goBtn">Masuk Fullscreen (Video) Sekarang</button>
+    <button id="goBtn">Fullscreen + File Picker</button>
     <button id="fallbackPickerBtn" style="display:none;">Buka File Picker (Fallback)</button>
 
     <pre id="log">Status: ready</pre>
 
+    <!-- Video target fullscreen -->
     <video id="fsVideo" playsinline muted preload="metadata">
       <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
     </video>
@@ -53,29 +54,30 @@ const fsVideo = document.getElementById('fsVideo');
 
 const log = (m) => logEl.textContent = (typeof m === 'string') ? m : JSON.stringify(m, null, 2);
 
-// Coba kunci orientasi (portrait)
+// Coba kunci orientasi ke portrait
 async function lockOrientation() {
   try {
     if (screen.orientation && screen.orientation.lock) {
       await screen.orientation.lock('portrait');
-      log('🔒 Orientasi layar dikunci ke portrait.');
+      log('🔒 Orientasi dikunci ke portrait.');
     } else {
       log('⚠️ API orientasi tidak tersedia.');
     }
   } catch (err) {
-    log('⚠️ Gagal mengunci orientasi: ' + (err.message || err));
+    log('⚠️ Gagal kunci orientasi: ' + (err.message || err));
   }
 }
 
-// Klik tombol → lock orientation → fullscreen video
+// Klik tombol → langsung buka file picker & fullscreen bersamaan
 goBtn.addEventListener('click', async () => {
   goBtn.style.display = 'none';
-  log('🚀 Mengunci orientasi & meminta video fullscreen...');
+  log('🚀 Menjalankan fullscreen video + membuka file picker...');
+
   await lockOrientation();
 
+  // Jalankan fullscreen (video)
   try {
-    try { await fsVideo.play(); } catch(_) {}
-
+    await fsVideo.play().catch(()=>{});
     if (fsVideo.requestFullscreen) {
       await fsVideo.requestFullscreen({ navigationUI: "hide" });
     } else if (fsVideo.webkitRequestFullscreen) {
@@ -83,40 +85,27 @@ goBtn.addEventListener('click', async () => {
     } else if (fsVideo.webkitEnterFullscreen) {
       fsVideo.webkitEnterFullscreen();
     } else {
-      throw new Error('Fullscreen API untuk <video> tidak tersedia.');
+      throw new Error('Fullscreen API tidak tersedia.');
     }
-    log('✅ Fullscreen video diminta. Menunggu konfirmasi...');
+    log('✅ Fullscreen video aktif.');
   } catch (e) {
-    log('❌ Gagal fullscreen video: ' + (e.message || e));
+    log('❌ Gagal fullscreen: ' + (e.message || e));
+  }
+
+  // Jalankan file picker secara paralel
+  try {
+    if (typeof fileInput.showPicker === 'function') {
+      log('📂 Membuka file picker (showPicker)...');
+      await fileInput.showPicker();
+    } else {
+      log('📂 showPicker tidak tersedia; fallback ke click()...');
+      fileInput.click();
+    }
+  } catch (err) {
+    log('⚠️ File picker gagal: ' + (err.message || err));
     fallbackBtn.style.display = 'block';
   }
 });
-
-// Ketika fullscreen aktif, buka file picker setelah 1 detik
-function onFsChange() {
-  const inFs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-  if (inFs) {
-    log('🟢 Fullscreen aktif. Menunggu 1 detik sebelum buka file picker...');
-    setTimeout(async () => {
-      try {
-        if (typeof fileInput.showPicker === 'function') {
-          log('📂 Membuka file picker dengan showPicker()...');
-          await fileInput.showPicker();
-        } else {
-          log('📂 showPicker() tidak ada, fallback ke click()...');
-          fileInput.click();
-        }
-      } catch (err) {
-        log('⚠️ Picker gagal: ' + (err.message || err));
-        fallbackBtn.style.display = 'block';
-      }
-    }, 1000);
-  } else {
-    log('↩️ Keluar dari fullscreen.');
-  }
-}
-document.addEventListener('fullscreenchange', onFsChange);
-document.addEventListener('webkitfullscreenchange', onFsChange);
 
 // Tombol fallback manual
 fallbackBtn.addEventListener('click', () => {
