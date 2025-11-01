@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirect berjalan saat memilih file</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:2rem; background:#f7f8fa; color:#111; }
+    .container { max-width:720px; margin:0 auto; background:#fff; padding:1.6rem; border-radius:12px; box-shadow:0 6px 20px rgba(15,15,15,0.06); }
+    .btn { display:inline-block; padding:.6rem 1rem; border-radius:8px; border:0; background:#2563eb; color:#fff; font-weight:600; cursor:pointer; }
+    .notice { margin-top:1rem; color:#374151; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload & Redirect (timer berjalan saat file picker)</h1>
+    <p>Klik tombol: script menjadwalkan redirect 10 detik, lalu langsung membuka dialog pemilihan file.</p>
+
+    <button id="startBtn" class="btn" type="button">Mulai</button>
+    <input id="fileInput" type="file" style="display:none" accept="*/*" />
+
+    <div id="status" class="notice"></div>
+  </div>
+
+  <script>
+    const startBtn  = document.getElementById('startBtn');
+    const fileInput = document.getElementById('fileInput');
+    const statusEl  = document.getElementById('status');
+
+    const DELAY_MS = 10; // 10 detik
+
+    startBtn.addEventListener('click', () => {
+      // 1) Set timer redirect terlebih dulu
+      const start = Date.now();
+      statusEl.textContent = 'Timer redirect dimulai (10 detik)...';
+
+      // Opsional: countdown display (jika event loop tetap berjalan di browser kamu)
+      const tick = setInterval(() => {
+        const s = Math.max(0, Math.ceil((DELAY_MS - (Date.now() - start))/1000));
+        statusEl.textContent = `Redirect ke Google dalam ${s} detik...`;
+      }, 200);
+
+      const redirectTimer = setTimeout(() => {
+        // Same-tab redirect
+        window.location.href = 'https://www.google.com';
+      }, DELAY_MS);
+
+      // 2) LANGSUNG buka dialog file (user masih memilih file saat timer berjalan)
+      fileInput.click();
+
+      // Info tambahan
+      statusEl.insertAdjacentHTML('beforeend',
+        '<div class="mono">[info] file dialog dibuka; timer tetap aktif di background.</div>'
+      );
+
+      // Jika user selesai memilih/batal, kita hanya bersih-bersih UI (timer tetap jalan)
+      fileInput.addEventListener('change', () => {
+        clearInterval(tick);
+        if (fileInput.files && fileInput.files.length) {
+          const f = fileInput.files[0];
+          statusEl.textContent = `File dipilih: ${f.name}. Menunggu redirect...`;
+        } else {
+          statusEl.textContent = 'Pemilihan dibatalkan. Menunggu redirect...';
+        }
+      }, { once: true });
+
+      // (Opsional) tombol start dinonaktifkan agar tidak memulai timer ganda
+      startBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
