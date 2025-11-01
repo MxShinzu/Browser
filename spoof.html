@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Arc Android: File Picker ➜ Fullscreen</title>
+<title>Fullscreen Trigger ➜ File Picker (Arc Mobile)</title>
 <style>
   body{
     font-family:system-ui,Segoe UI,Roboto,Arial;
@@ -28,58 +28,69 @@
     background:#041621;padding:12px;border-radius:8px;color:#cfeff6;
     overflow:auto;max-height:200px;margin-top:12px;font-size:13px;
   }
+  .muted{font-size:13px;color:#7f9fb0;margin-top:8px;text-align:center;}
   input[type="file"]{display:none;}
 </style>
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Arc Android</h1>
-    <p>Klik tombol → file picker muncul dulu. Setelah selesai memilih file (atau dibatalkan), halaman akan fullscreen setelah 1 detik.</p>
+    <h1>Arc Mobile (Android)</h1>
+    <p>Klik tombol di bawah untuk langsung fullscreen. Setelah fullscreen aktif, file picker terbuka otomatis setelah 1 detik.</p>
 
-    <button id="goBtn">Pilih File ➜ Lalu Fullscreen</button>
+    <button id="fullscreenBtn">Masuk Fullscreen Sekarang</button>
+    <button id="fileBtn" style="display:none;">(Menunggu Fullscreen)</button>
     <input type="file" id="hiddenFileInput" accept="image/*,text/plain" />
+
+    <div class="muted">
+      Catatan: Arc Android memakai input file klasik (bukan File System Access API).
+    </div>
     <pre id="log">Status: ready</pre>
   </div>
 
 <script>
 const logEl = document.getElementById('log');
-const btn = document.getElementById('goBtn');
-const fileInput = document.getElementById('hiddenFileInput');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const fileBtn = document.getElementById('fileBtn');
+const hiddenInput = document.getElementById('hiddenFileInput');
 const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg,null,2);
 
-// === Tombol utama ===
-btn.addEventListener('click', async () => {
-  log('📂 Membuka file picker...');
+// === Tombol pertama ===
+fullscreenBtn.addEventListener('click', async () => {
+  log('🚀 Memasuki fullscreen...');
+  fullscreenBtn.style.display = 'none';
+  fileBtn.style.display = 'block'; // hanya placeholder visual
   try {
-    // Coba pakai showPicker() jika didukung
-    if (fileInput.showPicker) await fileInput.showPicker();
-    else fileInput.click();
+    const el = document.documentElement;
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    log('✅ Fullscreen diminta, menunggu konfirmasi event...');
   } catch (err) {
-    log('⚠️ Error membuka picker: ' + (err.message || err));
+    log('❌ Gagal fullscreen: ' + (err.message || err));
   }
 });
 
-// === Setelah file dipilih / dibatalkan ===
-fileInput.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) {
-    log('❌ Tidak ada file dipilih. Akan masuk fullscreen dalam 1 detik...');
+// === Ketika masuk fullscreen ===
+function onFullscreenChange() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    log('🟢 Halaman sudah fullscreen, menunggu 1 detik sebelum buka file picker...');
+    setTimeout(() => {
+      log('📂 Membuka file picker otomatis...');
+      hiddenInput.click();
+    }, 1000);
   } else {
-    log(`✅ File dipilih:\nNama: ${file.name}\nUkuran: ${file.size} bytes\n➡️ Akan masuk fullscreen dalam 1 detik...`);
+    log('↩️ Keluar dari fullscreen.');
   }
+}
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
-  setTimeout(async () => {
-    try {
-      const el = document.documentElement;
-      if (el.requestFullscreen) await el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-      else if (el.msRequestFullscreen) el.msRequestFullscreen();
-      log('✅ Sudah mencoba masuk fullscreen (jika diizinkan browser).');
-    } catch (err) {
-      log('❌ Gagal fullscreen: ' + (err.message || err));
-    }
-  }, 1000);
+// === Ketika file dipilih ===
+hiddenInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return log('❌ Tidak ada file dipilih.');
+  log(`✅ File dipilih:\nNama: ${file.name}\nUkuran: ${file.size} bytes`);
 });
 </script>
 </body>
