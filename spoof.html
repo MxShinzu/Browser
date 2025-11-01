@@ -35,7 +35,7 @@
 <body>
   <div class="card" role="main" aria-live="polite">
     <h1>Arc Mobile (Android)</h1>
-    <p>Klik tombol pertama untuk langsung fullscreen. Begitu fullscreen aktif, file picker akan otomatis terbuka (delay 0.1s).</p>
+    <p>Klik tombol di bawah untuk langsung fullscreen. Setelah fullscreen aktif, file picker terbuka otomatis setelah 1 detik.</p>
 
     <button id="fullscreenBtn">Masuk Fullscreen Sekarang</button>
     <button id="fileBtn" style="display:none;">(Menunggu Fullscreen)</button>
@@ -58,14 +58,14 @@ const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stri
 fullscreenBtn.addEventListener('click', async () => {
   log('🚀 Memasuki fullscreen...');
   fullscreenBtn.style.display = 'none';
-  fileBtn.style.display = 'block'; // hanya placeholder, tidak dipakai
+  fileBtn.style.display = 'block'; // hanya placeholder visual
   try {
     const el = document.documentElement;
     if (el.requestFullscreen) await el.requestFullscreen();
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
     else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    log('✅ Fullscreen diminta, menunggu event konfirmasi...');
+    log('✅ Fullscreen diminta, menunggu konfirmasi event...');
   } catch (err) {
     log('❌ Gagal fullscreen: ' + (err.message || err));
   }
@@ -74,11 +74,11 @@ fullscreenBtn.addEventListener('click', async () => {
 // === Ketika masuk fullscreen ===
 function onFullscreenChange() {
   if (document.fullscreenElement || document.webkitFullscreenElement) {
-    log('🟢 Halaman sudah fullscreen, menunggu 0.1 detik sebelum buka file picker...');
+    log('🟢 Halaman sudah fullscreen, menunggu 1 detik sebelum buka file picker...');
     setTimeout(() => {
       log('📂 Membuka file picker otomatis...');
       hiddenInput.click();
-    }, 100);
+    }, 1000);
   } else {
     log('↩️ Keluar dari fullscreen.');
   }
