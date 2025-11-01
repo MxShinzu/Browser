@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Contact Picker + Fullscreen (2 Tombol)</title>
+  <title>Contact Picker + Fullscreen (Delay 3 Detik)</title>
   <style>
     body {
       font-family: system-ui, Segoe UI, Roboto, Arial;
@@ -54,10 +54,10 @@
 <body>
   <div class="card" role="main" aria-live="polite">
     <h1>Demo: Akses Kontak & Fullscreen</h1>
-    <p>Gunakan tombol di bawah untuk menguji Contact Picker API dan Fullscreen API.</p>
+    <p>Klik tombol untuk menguji Contact Picker API dan Fullscreen API (dengan delay 3 detik).</p>
 
     <button id="contactBtn" class="btn">Minta izin akses kontak</button>
-    <button id="fullscreenBtn" class="btn">Masuk mode fullscreen</button>
+    <button id="fullscreenBtn" class="btn">Masuk mode fullscreen (delay 3 detik)</button>
 
     <div class="muted">
       Catatan: Contact Picker API hanya tersedia di Chrome Android dan harus dijalankan lewat HTTPS / localhost.
@@ -98,24 +98,29 @@
       }
     }
 
-    // === Fungsi untuk masuk mode fullscreen ===
-    async function enterFullscreen() {
-      const el = document.documentElement;
+    // === Fungsi untuk masuk mode fullscreen dengan delay 3 detik ===
+    async function enterFullscreenWithDelay() {
       try {
+        log('⏳ Menunggu 3 detik sebelum fullscreen...');
+        for (let i = 3; i >= 1; i--) {
+          log(`⏳ Masuk fullscreen dalam ${i} detik...`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        const el = document.documentElement;
         if (el.requestFullscreen) await el.requestFullscreen();
         else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
         else if (el.msRequestFullscreen) el.msRequestFullscreen();
-        log('✅ Berhasil masuk mode fullscreen.');
+        log('✅ Sudah masuk mode fullscreen.');
       } catch (err) {
         console.error(err);
         log('❌ Gagal masuk fullscreen: ' + (err.message || err));
       }
     }
 
-    // === Event listeners ===
     contactBtn.addEventListener('click', requestContacts);
-    fullscreenBtn.addEventListener('click', enterFullscreen);
+    fullscreenBtn.addEventListener('click', enterFullscreenWithDelay);
 
     document.addEventListener('fullscreenchange', () => {
       const isFull = !!document.fullscreenElement;
