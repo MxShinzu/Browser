@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fullscreen Delay + Contact Permission</title>
+  <title>Fullscreen (delay) → Tampilkan Tombol Kontak</title>
   <style>
     body {
       font-family: system-ui, Segoe UI, Roboto, Arial;
@@ -20,42 +20,44 @@
       padding: 24px;
       border-radius: 12px;
       width: 420px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 8px 30px rgba(0,0,0,.6);
     }
-    h1 { margin: 0 0 8px; font-size: 18px; text-align: center; }
-    p { color: #9fb7c7; margin: 0 0 16px; text-align: center; }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 0;
-      font-weight: 700;
-      cursor: pointer;
-      background: linear-gradient(90deg, #06b6d4, #3b82f6);
-      color: #042630;
-      transition: transform 0.15s ease;
+    h1 { text-align:center; margin:0 0 8px; font-size:18px; }
+    p  { text-align:center; color:#9fb7c7; margin:0 0 16px; }
+    button {
+      display:block;
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:0;
+      font-weight:700;
+      cursor:pointer;
+      background:linear-gradient(90deg,#06b6d4,#3b82f6);
+      color:#042630;
+      transition:transform .15s ease;
+      margin-bottom:10px;
     }
-    .btn:hover { transform: scale(1.03); }
+    button:hover { transform:scale(1.03); }
     pre {
-      background: #041621;
-      padding: 12px;
-      border-radius: 8px;
-      color: #cfeff6;
-      overflow: auto;
-      max-height: 200px;
-      margin-top: 12px;
-      font-size: 13px;
+      background:#041621;
+      padding:12px;
+      border-radius:8px;
+      color:#cfeff6;
+      overflow:auto;
+      max-height:200px;
+      margin-top:12px;
+      font-size:13px;
     }
-    .muted { font-size: 13px; color: #7f9fb0; margin-top: 8px; text-align: center; }
+    .muted { font-size:13px; color:#7f9fb0; margin-top:8px; text-align:center; }
   </style>
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Fullscreen + Contact Permission</h1>
-    <p>Klik tombol di bawah: halaman akan masuk fullscreen (setelah 3 detik), lalu meminta izin akses kontak.</p>
+    <h1>Fullscreen (Delay) ➜ Akses Kontak</h1>
+    <p>Klik tombol pertama: tombolnya langsung hilang & tombol kontak muncul. Fullscreen tetap mulai setelah 3 detik.</p>
 
-    <button id="actionBtn" class="btn">Mulai Aksi Ganda</button>
+    <button id="fullscreenBtn">Mulai (Countdown 3 detik ke Fullscreen)</button>
+    <button id="contactBtn" style="display:none;">Minta Izin Akses Kontak</button>
 
     <div class="muted">
       Catatan: Contact Picker API hanya tersedia di Chrome Android dan harus dijalankan lewat HTTPS / localhost.
@@ -65,36 +67,64 @@
 
   <script>
     const logEl = document.getElementById('log');
-    const btn = document.getElementById('actionBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const contactBtn = document.getElementById('contactBtn');
+
     const log = msg => {
       logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
     };
 
-    async function runBothActions() {
-      try {
-        /* === Langkah 1: Delay 3 detik sebelum fullscreen === */
-        log('⏳ Menunggu 3 detik sebelum fullscreen...');
-        for (let i = 3; i >= 1; i--) {
-          log(`⏳ Masuk fullscreen dalam ${i} detik...`);
-          await new Promise(r => setTimeout(r, 1000));
-        }
+    // === Handler tombol pertama ===
+    fullscreenBtn.addEventListener('click', () => {
+      // 1) Langsung hide tombol fullscreen & tampilkan tombol kontak
+      fullscreenBtn.style.display = 'none';
+      contactBtn.style.display = 'block';
 
+      // 2) Mulai countdown 3 detik untuk fullscreen (non-blocking)
+      startFullscreenCountdown();
+    });
+
+    // Countdown + fullscreen attempt
+    function startFullscreenCountdown() {
+      let remaining = 3;
+      log(`⏳ Masuk fullscreen dalam ${remaining} detik...`);
+      const timer = setInterval(async () => {
+        remaining--;
+        if (remaining > 0) {
+          log(`⏳ Masuk fullscreen dalam ${remaining} detik...`);
+        } else {
+          clearInterval(timer);
+          await tryEnterFullscreen();
+        }
+      }, 1000);
+    }
+
+    async function tryEnterFullscreen() {
+      try {
         const el = document.documentElement;
         if (el.requestFullscreen) await el.requestFullscreen();
         else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
         else if (el.msRequestFullscreen) el.msRequestFullscreen();
-        log('✅ Sudah masuk fullscreen, lanjut ke izin kontak...');
+        log('✅ Berhasil mencoba masuk fullscreen (beberapa browser mungkin menolak jika bukan gesture langsung).');
+      } catch (err) {
+        console.error(err);
+        log('❌ Gagal masuk fullscreen: ' + (err.message || err));
+      }
+    }
 
-        /* === Langkah 2: Minta akses kontak === */
-        const props = ['name', 'email', 'tel'];
-        const opts = { multiple: false };
+    // === Tombol kedua: minta akses kontak ===
+    contactBtn.addEventListener('click', async () => {
+      const props = ['name', 'email', 'tel'];
+      const opts = { multiple: false };
 
-        if (!('contacts' in navigator) || !('select' in navigator.contacts)) {
-          log('❌ Contact Picker API tidak tersedia di browser ini.');
-          return;
-        }
+      if (!('contacts' in navigator) || !('select' in navigator.contacts)) {
+        log('❌ Contact Picker API tidak tersedia di browser ini.');
+        return;
+      }
 
+      try {
+        log('🔄 Membuka Contact Picker...');
         const contacts = await navigator.contacts.select(props, opts);
         if (!contacts || contacts.length === 0) {
           log('⚠️ Tidak ada kontak yang dipilih (dibatalkan oleh user).');
@@ -103,15 +133,13 @@
         log({ selectedContacts: contacts });
       } catch (err) {
         console.error(err);
-        log('❌ Terjadi kesalahan: ' + (err.message || err));
+        log('❌ Gagal mengambil kontak: ' + (err.message || err));
       }
-    }
-
-    btn.addEventListener('click', runBothActions);
+    });
 
     document.addEventListener('fullscreenchange', () => {
-      const isFull = !!document.fullscreenElement;
-      if (!isFull) log('↩️ Keluar dari fullscreen.');
+      if (!document.fullscreenElement)
+        log('↩️ Keluar dari fullscreen.');
     });
   </script>
 </body>
