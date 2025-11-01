@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Arc Mobile Demo: File Picker ➜ Fullscreen</title>
+<title>Arc Mobile Demo: FilePicker + Fullscreen</title>
 <style>
   body{
     font-family:system-ui,Segoe UI,Roboto,Arial;
@@ -35,10 +35,10 @@
 <body>
   <div class="card" role="main" aria-live="polite">
     <h1>Arc Mobile (Android)</h1>
-    <p>Klik tombol pertama → setelah 2 detik file picker terbuka. Setelah itu muncul tombol kedua untuk fullscreen (delay 3 detik).</p>
+    <p>Klik tombol pertama → muncul tombol kedua. Saat tombol kedua diklik → jalankan file picker & fullscreen.</p>
 
-    <button id="fileBtn">Pilih File (delay 2 detik)</button>
-    <button id="fullscreenBtn" style="display:none;">Masuk Fullscreen (delay 3 detik)</button>
+    <button id="fileBtn">Langkah 1: Tampilkan Tombol Fullscreen</button>
+    <button id="fullscreenBtn" style="display:none;">Langkah 2: Jalankan File Picker + Fullscreen</button>
     <input type="file" id="hiddenFileInput" accept="image/*,text/plain" />
 
     <div class="muted">
@@ -54,18 +54,28 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const hiddenInput = document.getElementById('hiddenFileInput');
 const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg,null,2);
 
+let filePickerReady = false;
+
 // === Tombol pertama ===
 fileBtn.addEventListener('click', () => {
-  log('⏳ Menunggu 2 detik sebelum membuka file picker...');
-  // 1. Langsung sembunyikan tombol pertama, tampilkan tombol kedua
   fileBtn.style.display = 'none';
   fullscreenBtn.style.display = 'block';
+  filePickerReady = true;
+  log('✅ Tombol fullscreen ditampilkan. Menunggu klik untuk jalankan file picker + fullscreen...');
+});
 
-  // 2. Jalankan file picker setelah 2 detik
-  setTimeout(() => {
-    log('📂 Membuka file picker...');
-    hiddenInput.click();
-  }, 2000);
+// === Tombol kedua ===
+fullscreenBtn.addEventListener('click', async () => {
+  if (!filePickerReady) {
+    return log('⚠️ File picker belum siap.');
+  }
+  log('📂 Membuka file picker dan masuk fullscreen...');
+  
+  // Jalankan file picker
+  hiddenInput.click();
+
+  // Langsung coba masuk fullscreen
+  await tryEnterFullscreen();
 });
 
 // === Ketika file dipilih ===
@@ -73,12 +83,6 @@ hiddenInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return log('❌ Tidak ada file dipilih.');
   log(`✅ File dipilih:\nNama: ${file.name}\nUkuran: ${file.size} bytes`);
-});
-
-// === Tombol kedua ===
-fullscreenBtn.addEventListener('click', () => {
-  log('⏳ Menunggu 3 detik sebelum fullscreen...');
-  setTimeout(tryEnterFullscreen, 3000);
 });
 
 // === Fungsi fullscreen ===
@@ -89,13 +93,12 @@ async function tryEnterFullscreen() {
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
     else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    log('✅ Percobaan fullscreen dijalankan (akan bekerja di Chrome/Arc Desktop).');
+    log('✅ Fullscreen dijalankan.');
   } catch (err) {
     log('❌ Gagal masuk fullscreen: ' + (err.message || err));
   }
 }
 
-// === Event keluar fullscreen ===
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement)
     log('↩️ Keluar dari fullscreen.');
