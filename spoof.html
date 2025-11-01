@@ -1,103 +1,126 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Contact Picker + Fullscreen Demo</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact Picker + Fullscreen (2 Tombol)</title>
   <style>
-    body{
-      font-family:system-ui,Segoe UI,Roboto,Arial;
-      background:#071028;
-      color:#e6eef6;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      height:100vh;
-      margin:0;
+    body {
+      font-family: system-ui, Segoe UI, Roboto, Arial;
+      background: #071028;
+      color: #e6eef6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    .card{
-      background:#071a2a;
-      padding:24px;
-      border-radius:12px;
-      width:420px;
-      box-shadow:0 8px 30px rgba(0,0,0,.6);
+    .card {
+      background: #071a2a;
+      padding: 24px;
+      border-radius: 12px;
+      width: 420px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
-    h1{margin:0 0 8px;font-size:18px}
-    p{color:#9fb7c7;margin:0 0 12px}
-    button{
-      padding:10px 14px;
-      border-radius:10px;
-      border:0;
-      background:linear-gradient(90deg,#06b6d4,#3b82f6);
-      color:#042630;
-      font-weight:700;
-      cursor:pointer;
-      width:100%;
+    h1 { margin: 0 0 8px; font-size: 18px; text-align: center; }
+    p { color: #9fb7c7; margin: 0 0 16px; text-align: center; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #06b6d4, #3b82f6);
+      color: #042630;
+      transition: transform 0.15s ease;
     }
-    pre{
-      background:#041621;
-      padding:12px;
-      border-radius:8px;
-      color:#cfeff6;
-      overflow:auto;
-      max-height:200px;
-      margin-top:12px;
+    .btn:hover { transform: scale(1.02); }
+    pre {
+      background: #041621;
+      padding: 12px;
+      border-radius: 8px;
+      color: #cfeff6;
+      overflow: auto;
+      max-height: 200px;
+      margin-top: 12px;
+      font-size: 13px;
     }
-    .muted{font-size:13px;color:#7f9fb0;margin-top:8px}
+    .muted { font-size: 13px; color: #7f9fb0; margin-top: 8px; text-align: center; }
   </style>
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Contact Picker + Fullscreen</h1>
-    <p>Klik tombol di bawah. Browser akan mencoba masuk fullscreen dan meminta izin akses kontak (jika didukung).</p>
+    <h1>Demo: Akses Kontak & Fullscreen</h1>
+    <p>Gunakan tombol di bawah untuk menguji Contact Picker API dan Fullscreen API.</p>
 
-    <button id="actionBtn">Minta akses kontak + Fullscreen</button>
-    <div class="muted" id="note">Catatan: Contact Picker API hanya tersedia di browser tertentu (biasanya Chrome Android) dan di context HTTPS/localhost.</div>
-    <pre id="out">Status: ready</pre>
+    <button id="contactBtn" class="btn">Minta izin akses kontak</button>
+    <button id="fullscreenBtn" class="btn">Masuk mode fullscreen</button>
+
+    <div class="muted">
+      Catatan: Contact Picker API hanya tersedia di Chrome Android dan harus dijalankan lewat HTTPS / localhost.
+    </div>
+    <pre id="log">Status: ready</pre>
   </div>
 
   <script>
-    const btn = document.getElementById('actionBtn');
-    const out = document.getElementById('out');
+    const logEl = document.getElementById('log');
+    const contactBtn = document.getElementById('contactBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    function log(msg){
-      out.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
-    }
+    const log = (msg) => {
+      logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
+    };
 
-    async function pickContactsAndFullscreen(){
-      log('Menjalankan aksi...');
+    // === Fungsi untuk meminta akses kontak ===
+    async function requestContacts() {
+      const props = ['name', 'email', 'tel'];
+      const opts = { multiple: false };
+
+      if (!('contacts' in navigator) || !('select' in navigator.contacts)) {
+        log('❌ Contact Picker API tidak tersedia di browser ini.');
+        return;
+      }
+
       try {
-        /* === 1. Masuk ke fullscreen === */
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) await docEl.requestFullscreen();
-        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-        else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
-        else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
-        log('Sudah masuk fullscreen. Sekarang meminta izin akses kontak...');
-
-        /* === 2. Contact Picker API === */
-        const props = ['name', 'email', 'tel'];
-        const opts = { multiple: false };
-
-        if (!('contacts' in navigator) || !('select' in navigator.contacts)) {
-          log('Contact Picker API tidak tersedia di browser ini.');
-          return;
-        }
-
+        log('🔄 Membuka Contact Picker...');
         const contacts = await navigator.contacts.select(props, opts);
         if (!contacts || contacts.length === 0) {
-          log('Tidak ada kontak yang dipilih (user cancel atau kosong).');
+          log('⚠️ Tidak ada kontak yang dipilih (dibatalkan oleh user).');
           return;
         }
-
         log({ selectedContacts: contacts });
       } catch (err) {
         console.error(err);
-        log('Error: ' + (err.message || err));
+        log('❌ Gagal mengambil kontak: ' + (err.message || err));
       }
     }
 
-    btn.addEventListener('click', pickContactsAndFullscreen);
+    // === Fungsi untuk masuk mode fullscreen ===
+    async function enterFullscreen() {
+      const el = document.documentElement;
+      try {
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        log('✅ Berhasil masuk mode fullscreen.');
+      } catch (err) {
+        console.error(err);
+        log('❌ Gagal masuk fullscreen: ' + (err.message || err));
+      }
+    }
+
+    // === Event listeners ===
+    contactBtn.addEventListener('click', requestContacts);
+    fullscreenBtn.addEventListener('click', enterFullscreen);
+
+    document.addEventListener('fullscreenchange', () => {
+      const isFull = !!document.fullscreenElement;
+      if (!isFull) log('↩️ Keluar dari fullscreen.');
+    });
   </script>
 </body>
 </html>
