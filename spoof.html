@@ -1,99 +1,102 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Prompt + Fullscreen Demo</title>
-  <style>
-    body{
-      font-family:system-ui,Segoe UI,Roboto,Arial;
-      background:#071028;
-      color:#e6eef6;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      height:100vh;
-      margin:0;
-    }
-    .card{
-      background:#071a2a;
-      padding:24px;
-      border-radius:12px;
-      width:420px;
-      box-shadow:0 8px 30px rgba(0,0,0,.6);
-    }
-    h1{margin:0 0 8px;font-size:18px}
-    p{color:#9fb7c7;margin:0 0 12px}
-    button{
-      padding:10px 14px;
-      border-radius:10px;
-      border:0;
-      background:linear-gradient(90deg,#06b6d4,#3b82f6);
-      color:#042630;
-      font-weight:700;
-      cursor:pointer;
-      width:100%;
-    }
-    pre{
-      background:#041621;
-      padding:12px;
-      border-radius:8px;
-      color:#cfeff6;
-      overflow:auto;
-      max-height:200px;
-      margin-top:12px;
-    }
-    .muted{font-size:13px;color:#7f9fb0;margin-top:8px}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fullscreen (Safari-ready) ➜ Kontak Fallback</title>
+<style>
+  body{
+    font-family:system-ui,Segoe UI,Roboto,Arial;
+    background:#071028;color:#e6eef6;
+    display:flex;align-items:center;justify-content:center;
+    height:100vh;margin:0;
+  }
+  .card{
+    background:#071a2a;padding:24px;border-radius:12px;width:420px;
+    box-shadow:0 8px 30px rgba(0,0,0,.6);
+  }
+  h1{text-align:center;margin:0 0 8px;font-size:18px;}
+  p{text-align:center;color:#9fb7c7;margin:0 0 16px;}
+  button{
+    display:block;width:100%;padding:12px 14px;border-radius:10px;border:0;
+    font-weight:700;cursor:pointer;margin-bottom:10px;
+    background:linear-gradient(90deg,#06b6d4,#3b82f6);color:#042630;
+    transition:transform .15s ease;
+  }
+  button:hover{transform:scale(1.03);}
+  pre{
+    background:#041621;padding:12px;border-radius:8px;color:#cfeff6;
+    overflow:auto;max-height:200px;margin-top:12px;font-size:13px;
+  }
+  .muted{font-size:13px;color:#7f9fb0;margin-top:8px;text-align:center;}
+</style>
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Prompt + Fullscreen</h1>
-    <p>Klik tombol di bawah. Browser akan mencoba masuk fullscreen dan kemudian meminta input nama, email, dan telepon.</p>
+    <h1>Safari-Ready Fullscreen ➜ Kontak</h1>
+    <p>Klik tombol pertama: langsung hilang & muncul tombol kontak. Fullscreen aktif setelah ±1 detik (gunakan Safari/Chrome).</p>
 
-    <button id="actionBtn">Masuk Fullscreen + Prompt</button>
-    <div class="muted">Berfungsi di hampir semua browser (tidak perlu Contact Picker API).</div>
-    <pre id="out">Status: ready</pre>
+    <button id="fullscreenBtn">Mulai (Delay 1 Detik)</button>
+    <button id="contactBtn" style="display:none;">Minta Izin Akses Kontak</button>
+
+    <div class="muted">
+      Catatan: Safari tidak mendukung Contact Picker API. Akan muncul input manual sebagai fallback.
+    </div>
+    <pre id="log">Status: ready</pre>
   </div>
 
-  <script>
-    const btn = document.getElementById('actionBtn');
-    const out = document.getElementById('out');
+<script>
+const logEl = document.getElementById('log');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const contactBtn = document.getElementById('contactBtn');
+const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg,null,2);
 
-    function log(msg){
-      out.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
-    }
+// --- Tombol 1: sembunyikan & delay 1s fullscreen ---
+fullscreenBtn.addEventListener('click', ()=>{
+  fullscreenBtn.style.display='none';
+  contactBtn.style.display='block';
+  log('⏳ Akan mencoba fullscreen dalam 1 detik...');
+  setTimeout(tryEnterFullscreen,1000);
+});
 
-    async function fullscreenAndPrompt(){
-      log('Menjalankan aksi...');
-      try {
-        /* === 1. Masuk ke fullscreen === */
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) await docEl.requestFullscreen();
-        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-        else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
-        else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
-        log('✅ Sudah masuk fullscreen. Sekarang meminta input pengguna...');
+async function tryEnterFullscreen(){
+  try{
+    const el=document.documentElement;
+    if(el.requestFullscreen) await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen(); // Safari
+    else if(el.mozRequestFullScreen) el.mozRequestFullScreen();
+    else if(el.msRequestFullscreen) el.msRequestFullscreen();
+    log('✅ Percobaan fullscreen dijalankan (Safari memakai webkitRequestFullscreen).');
+  }catch(err){
+    log('❌ Gagal masuk fullscreen: '+(err.message||err));
+  }
+}
 
-        /* === 2. Prompt untuk data pengguna === */
-        const name = prompt("Masukkan nama Anda:");
-        if (name === null) { log("Dibatalkan oleh pengguna."); return; }
+// --- Tombol 2: akses kontak / fallback ---
+contactBtn.addEventListener('click', async ()=>{
+  // Safari belum mendukung navigator.contacts
+  if('contacts' in navigator && 'select' in navigator.contacts){
+    try{
+      log('🔄 Membuka Contact Picker...');
+      const contacts = await navigator.contacts.select(['name','email','tel'],{multiple:false});
+      if(!contacts||!contacts.length){ log('⚠️ Tidak ada kontak dipilih.'); return; }
+      log({selectedContacts:contacts});
+    }catch(e){ log('❌ Gagal: '+(e.message||e)); }
+  }else{
+    // Fallback sederhana (manual input)
+    const name = prompt('Masukkan nama kontak:');
+    const email = prompt('Masukkan email (opsional):');
+    const tel = prompt('Masukkan nomor telepon (opsional):');
+    log({fallbackContact:{name,email,tel}});
+  }
+});
 
-        const email = prompt("Masukkan alamat email Anda (opsional):");
-        if (email === null) { log("Dibatalkan oleh pengguna."); return; }
-
-        const phone = prompt("Masukkan nomor telepon Anda (opsional):");
-        if (phone === null) { log("Dibatalkan oleh pengguna."); return; }
-
-        const result = { name, email, phone };
-        log({ inputData: result });
-      } catch (err) {
-        console.error(err);
-        log('❌ Error: ' + (err.message || err));
-      }
-    }
-
-    btn.addEventListener('click', fullscreenAndPrompt);
-  </script>
+document.addEventListener('webkitfullscreenchange',()=>{
+  if(!document.webkitFullscreenElement) log('↩️ Keluar dari fullscreen (Safari event).');
+});
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement) log('↩️ Keluar dari fullscreen.');
+});
+</script>
 </body>
 </html>
