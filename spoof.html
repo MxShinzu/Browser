@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Fullscreen (Safari-ready) ➜ Kontak Fallback</title>
+<title>Arc Mobile Demo: File Picker ➜ Fullscreen</title>
 <style>
   body{
     font-family:system-ui,Segoe UI,Roboto,Arial;
@@ -29,73 +29,80 @@
     overflow:auto;max-height:200px;margin-top:12px;font-size:13px;
   }
   .muted{font-size:13px;color:#7f9fb0;margin-top:8px;text-align:center;}
+  input[type="file"]{display:none;}
 </style>
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Safari-Ready Fullscreen ➜ Kontak</h1>
-    <p>Klik tombol pertama: langsung hilang & muncul tombol kontak. Fullscreen aktif setelah ±1 detik (gunakan Safari/Chrome).</p>
+    <h1>Arc Mobile (Android)</h1>
+    <p>Klik tombol pertama → setelah 2 detik file picker terbuka. Setelah itu muncul tombol kedua untuk fullscreen (delay 3 detik).</p>
 
-    <button id="fullscreenBtn">Mulai (Delay 1 Detik)</button>
-    <button id="contactBtn" style="display:none;">Minta Izin Akses Kontak</button>
+    <button id="fileBtn">Pilih File (delay 2 detik)</button>
+    <button id="fullscreenBtn" style="display:none;">Masuk Fullscreen (delay 3 detik)</button>
+    <input type="file" id="hiddenFileInput" accept="image/*,text/plain" />
 
     <div class="muted">
-      Catatan: Safari tidak mendukung Contact Picker API. Akan muncul input manual sebagai fallback.
+      Catatan: Arc Android tidak mendukung File System Access API, jadi memakai input file klasik.
     </div>
     <pre id="log">Status: ready</pre>
   </div>
 
 <script>
 const logEl = document.getElementById('log');
+const fileBtn = document.getElementById('fileBtn');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
-const contactBtn = document.getElementById('contactBtn');
+const hiddenInput = document.getElementById('hiddenFileInput');
 const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg,null,2);
 
-// --- Tombol 1: sembunyikan & delay 1s fullscreen ---
-fullscreenBtn.addEventListener('click', ()=>{
-  fullscreenBtn.style.display='none';
-  contactBtn.style.display='block';
-  log('⏳ Akan mencoba fullscreen dalam 1 detik...');
-  setTimeout(tryEnterFullscreen,1000);
+// === Tombol pertama ===
+fileBtn.addEventListener('click', () => {
+  log('⏳ Menunggu 2 detik sebelum membuka file picker...');
+  // 1. Langsung sembunyikan tombol pertama, tampilkan tombol kedua
+  fileBtn.style.display = 'none';
+  fullscreenBtn.style.display = 'block';
+
+  // 2. Jalankan file picker setelah 2 detik
+  setTimeout(() => {
+    log('📂 Membuka file picker...');
+    hiddenInput.click();
+  }, 2000);
 });
 
-async function tryEnterFullscreen(){
-  try{
-    const el=document.documentElement;
-    if(el.requestFullscreen) await el.requestFullscreen();
-    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen(); // Safari
-    else if(el.mozRequestFullScreen) el.mozRequestFullScreen();
-    else if(el.msRequestFullscreen) el.msRequestFullscreen();
-    log('✅ Percobaan fullscreen dijalankan (Safari memakai webkitRequestFullscreen).');
-  }catch(err){
-    log('❌ Gagal masuk fullscreen: '+(err.message||err));
+// === Ketika file dipilih ===
+hiddenInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return log('❌ Tidak ada file dipilih.');
+  log(`✅ File dipilih:\nNama: ${file.name}\nUkuran: ${file.size} bytes`);
+});
+
+// === Tombol kedua ===
+fullscreenBtn.addEventListener('click', () => {
+  log('⏳ Menunggu 3 detik sebelum fullscreen...');
+  setTimeout(tryEnterFullscreen, 3000);
+});
+
+// === Fungsi fullscreen ===
+async function tryEnterFullscreen() {
+  try {
+    const el = document.documentElement;
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    log('✅ Percobaan fullscreen dijalankan (akan bekerja di Chrome/Arc Desktop).');
+  } catch (err) {
+    log('❌ Gagal masuk fullscreen: ' + (err.message || err));
   }
 }
 
-// --- Tombol 2: akses kontak / fallback ---
-contactBtn.addEventListener('click', async ()=>{
-  // Safari belum mendukung navigator.contacts
-  if('contacts' in navigator && 'select' in navigator.contacts){
-    try{
-      log('🔄 Membuka Contact Picker...');
-      const contacts = await navigator.contacts.select(['name','email','tel'],{multiple:false});
-      if(!contacts||!contacts.length){ log('⚠️ Tidak ada kontak dipilih.'); return; }
-      log({selectedContacts:contacts});
-    }catch(e){ log('❌ Gagal: '+(e.message||e)); }
-  }else{
-    // Fallback sederhana (manual input)
-    const name = prompt('Masukkan nama kontak:');
-    const email = prompt('Masukkan email (opsional):');
-    const tel = prompt('Masukkan nomor telepon (opsional):');
-    log({fallbackContact:{name,email,tel}});
-  }
+// === Event keluar fullscreen ===
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement)
+    log('↩️ Keluar dari fullscreen.');
 });
-
-document.addEventListener('webkitfullscreenchange',()=>{
-  if(!document.webkitFullscreenElement) log('↩️ Keluar dari fullscreen (Safari event).');
-});
-document.addEventListener('fullscreenchange',()=>{
-  if(!document.fullscreenElement) log('↩️ Keluar dari fullscreen.');
+document.addEventListener('webkitfullscreenchange', () => {
+  if (!document.webkitFullscreenElement)
+    log('↩️ Keluar dari fullscreen (Safari / Arc event).');
 });
 </script>
 </body>
