@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fullscreen (delay) → Tampilkan Tombol Kontak</title>
+  <title>Fullscreen Delay (1s) ➜ Contact Permission</title>
   <style>
     body {
       font-family: system-ui, Segoe UI, Roboto, Arial;
@@ -53,10 +53,10 @@
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <h1>Fullscreen (Delay) ➜ Akses Kontak</h1>
-    <p>Klik tombol pertama: tombolnya langsung hilang & tombol kontak muncul. Fullscreen tetap mulai setelah 3 detik.</p>
+    <h1>Fullscreen (Delay 1 Detik) ➜ Akses Kontak</h1>
+    <p>Klik tombol pertama: tombol akan hilang & tombol kedua langsung muncul. Fullscreen akan aktif setelah 1 detik.</p>
 
-    <button id="fullscreenBtn">Mulai (Countdown 3 detik ke Fullscreen)</button>
+    <button id="fullscreenBtn">Mulai (Delay 1 Detik)</button>
     <button id="contactBtn" style="display:none;">Minta Izin Akses Kontak</button>
 
     <div class="muted">
@@ -74,27 +74,26 @@
       logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
     };
 
-    // === Handler tombol pertama ===
+    // === Tombol pertama ===
     fullscreenBtn.addEventListener('click', () => {
-      // 1) Langsung hide tombol fullscreen & tampilkan tombol kontak
+      // Langsung sembunyikan tombol fullscreen dan munculkan tombol kontak
       fullscreenBtn.style.display = 'none';
       contactBtn.style.display = 'block';
 
-      // 2) Mulai countdown 3 detik untuk fullscreen (non-blocking)
+      // Jalankan countdown fullscreen (1 detik)
       startFullscreenCountdown();
     });
 
-    // Countdown + fullscreen attempt
-    function startFullscreenCountdown() {
-      let remaining = 3;
+    async function startFullscreenCountdown() {
+      let remaining = 1;
       log(`⏳ Masuk fullscreen dalam ${remaining} detik...`);
       const timer = setInterval(async () => {
         remaining--;
-        if (remaining > 0) {
-          log(`⏳ Masuk fullscreen dalam ${remaining} detik...`);
-        } else {
+        if (remaining <= 0) {
           clearInterval(timer);
           await tryEnterFullscreen();
+        } else {
+          log(`⏳ Masuk fullscreen dalam ${remaining} detik...`);
         }
       }, 1000);
     }
@@ -113,7 +112,7 @@
       }
     }
 
-    // === Tombol kedua: minta akses kontak ===
+    // === Tombol kedua ===
     contactBtn.addEventListener('click', async () => {
       const props = ['name', 'email', 'tel'];
       const opts = { multiple: false };
