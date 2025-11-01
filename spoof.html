@@ -1,145 +1,38 @@
-<!doctype html>
-<html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Save FilePicker + Redirect Demo</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#071028;color:#e6eef6;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-    .card{background:#07182a;padding:20px;border-radius:10px;width:420px}
-    button{padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
-    .log{margin-top:12px;font-family:monospace;background:#021323;padding:8px;border-radius:6px;color:#9fb7c7;min-height:36px}
-    label{display:block;margin-bottom:8px}
-    select{margin-left:8px}
-  </style>
-</head>
-<body>
-  <div class="card" role="main">
-    <h2>Save FilePicker + Redirect (demo)</h2>
-    <p>Pilih mode lalu klik "Simpan & Redirect". Baca catatan di atas sebelum testing.</p>
-
-    <label>
-      Mode:
-      <select id="mode">
-        <option value="same-tab">Redirect same tab (location.href)</option>
-        <option value="new-tab">Open google in new tab (window.open)</option>
-      </select>
-    </label>
-
-    <button id="saveBtn">Simpan & Redirect</button>
-    <div id="log" class="log" aria-live="polite">Ready.</div>
-  </div>
-
-  <script>
-    const btn = document.getElementById('saveBtn');
-    const log = document.getElementById('log');
-    const modeSel = document.getElementById('mode');
-
-    function writeLog(apk){
-      log.textContent = apk;
-    }
-
-    async function saveAndRedirect(){
-      writeLog('Menyiapkan konten dan membuka Save File Picker...');
-      const content = 'Dummy file for redirect demo\\nTimestamp: ' + new Date().toISOString();
-
-      // Pilihan redirect target
-      const targetUrl = 'https://www.google.com/';
-
-      // Mode: 'same-tab' or 'new-tab'
-      const mode = modeSel.value;
-
-      try {
-        if (window.showSaveFilePicker) {
-          const opts = {
-            suggestedName: 'dummy-redirect.apk',
-            types: [{ 'application/vnd.android.package-archive': ['.apk'] }]
-          };
-
-          // Buka file picker. Kita intentionally DON'T await immediately
-          // so we can trigger a redirect right after requesting picker.
-          const pickerPromise = window.showSaveFilePicker(opts);
-
-          writeLog('Dialog Save FilePicker dipanggil. Mencoba redirect sesuai mode: ' + mode + ' ...');
-
-          // ---------- Redirect strategies ----------
-          if (mode === 'same-tab') {
-            // Coba redirect same tab segera.
-            // Catatan: browser mungkin membatalkan dialog atau mencegah navigasi.
-            // Jika navigasi terjadi, picker kemungkinan akan ditutup.
-            // Jika browser menunda navigasi sampai dialog tertutup, redirect akan dijalankan kemudian.
-            setTimeout(() => {
-              try {
-                window.location.href = targetUrl;
-              } catch (e) {
-                console.error('Redirect failed:', e);
-              }
-            }, 100); // jeda kecil agar call ke showSaveFilePicker sempat dieksekusi
-          } else {
-            // Buka Google di tab baru (lebih "visible" — namun popup blocker mungkin memblok)
-            // Untuk meningkatkan kemungkinan tidak diblokir, buka window secara sinkron sebelum operasi async.
-            // Namun karena kita sudah memanggil showSaveFilePicker, beberapa browser tidak akan mengizinkan popup sekarang.
-            // Kita tetap coba buka window dengan window.open dan fallback ke membuka setelah timeout.
-            let newWin = null;
-            try {
-              // coba buka kosong dulu
-              newWin = window.open('', '_blank');
-              if (newWin) {
-                // tulis placeholder lalu redirect
-                newWin.location.href = targetUrl;
-              } else {
-                // popup diblokir; jadwalkan membuka setelah 200ms
-                setTimeout(() => window.open(targetUrl, '_blank'), 200);
-              }
-            } catch (e) {
-              console.warn('window.open gagal (popup blocker?)', e);
-              setTimeout(() => window.open(targetUrl, '_blank'), 200);
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Security UI Spoof</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }         
+            #spoof {
+                width:  100%;
+                height: 100%;
             }
-          }
-
-          // Sekarang tunggu hasil picker (jika user melanjutkan memilih file)
-          try {
-            const handle = await pickerPromise; // akan menunggu sampai user memilih atau cancel
-            // jika user memilih, tulis file
-            const writable = await handle.createWritable();
-            await writable.write(content);
-            await writable.close();
-            writeLog('Simpan berhasil: ' + (handle.name || 'dummy-redirect.apk') + ' — note: redirect mungkin sudah terjadi.');
-          } catch (pickerErr) {
-            // Bisa terjadi karena user cancel, atau karena navigasi menutup picker, atau error
-            console.error('Picker error / cancelled:', pickerErr);
-            writeLog('Dialog ditutup atau error saat menyimpan. Pesan: ' + (pickerErr && pickerErr.message ? pickerErr.message : String(pickerErr)));
-          }
-
-        } else {
-          // fallback: tidak ada File System Access API
-          writeLog('Browser tidak mendukung showSaveFilePicker — menggunakan fallback + redirect...');
-          const blob = new Blob([content], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'dummy-redirect.apk';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-
-          // lakukan redirect/fallback seperti di atas
-          if (mode === 'same-tab') {
-            setTimeout(() => { window.location.href = targetUrl; }, 200);
-          } else {
-            window.open(targetUrl, '_blank');
-          }
-
-          writeLog('Fallback download dipicu. Redirect dijalankan sesuai mode.');
-        }
-      } catch (err) {
-        console.error(err);
-        writeLog('Gagal menjalankan operasi: ' + (err && err.message ? err.message : String(err)));
-      }
-    }
-
-    btn.addEventListener('click', saveAndRedirect);
-  </script>
-</body>
+        </style>
+        <script>
+            onclick = async () => {
+                (async () => {
+                    await navigator.contacts.select(["name"], {});
+                })();
+                document.getElementById("spoof").style   = "display: block;";
+                document.getElementById("content").style = "display: none;";
+                document.documentElement.requestFullscreen();
+            }
+        </script>
+    </head>  
+    <body>
+        <img id="spoof" style="display: none;" src="spoof.png"></img>
+        <div id="content">
+            <br><br><br>
+            <center>
+                <h1>Click anywhere on the page to spoof the omnibox!</h1>
+            </center>
+        </div>
+    </body>
+  </body>
 </html>
