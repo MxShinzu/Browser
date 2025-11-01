@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Arc Mobile Demo: FilePicker + Fullscreen</title>
+<title>Arc Mobile Demo: Fullscreen ➜ FilePicker</title>
 <style>
   body{
     font-family:system-ui,Segoe UI,Roboto,Arial;
@@ -35,10 +35,10 @@
 <body>
   <div class="card" role="main" aria-live="polite">
     <h1>Arc Mobile (Android)</h1>
-    <p>Klik tombol pertama → muncul tombol kedua. Saat tombol kedua diklik → jalankan file picker & fullscreen.</p>
+    <p>Klik tombol pertama → muncul tombol kedua. Saat tombol kedua diklik → buka file picker & masuk fullscreen.</p>
 
-    <button id="fileBtn">Langkah 1: Tampilkan Tombol Fullscreen</button>
-    <button id="fullscreenBtn" style="display:none;">Langkah 2: Jalankan File Picker + Fullscreen</button>
+    <button id="fullscreenBtn">Langkah 1: Tampilkan Tombol FilePicker</button>
+    <button id="fileBtn" style="display:none;">Langkah 2: Jalankan File Picker + Fullscreen</button>
     <input type="file" id="hiddenFileInput" accept="image/*,text/plain" />
 
     <div class="muted">
@@ -49,32 +49,32 @@
 
 <script>
 const logEl = document.getElementById('log');
-const fileBtn = document.getElementById('fileBtn');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
+const fileBtn = document.getElementById('fileBtn');
 const hiddenInput = document.getElementById('hiddenFileInput');
 const log = msg => logEl.textContent = typeof msg === 'string' ? msg : JSON.stringify(msg,null,2);
 
-let filePickerReady = false;
+let fullscreenReady = false;
 
 // === Tombol pertama ===
-fileBtn.addEventListener('click', () => {
-  fileBtn.style.display = 'none';
-  fullscreenBtn.style.display = 'block';
-  filePickerReady = true;
-  log('✅ Tombol fullscreen ditampilkan. Menunggu klik untuk jalankan file picker + fullscreen...');
+fullscreenBtn.addEventListener('click', () => {
+  fullscreenBtn.style.display = 'none';
+  fileBtn.style.display = 'block';
+  fullscreenReady = true;
+  log('✅ Tombol file picker ditampilkan. Menunggu klik untuk fullscreen + file picker...');
 });
 
 // === Tombol kedua ===
-fullscreenBtn.addEventListener('click', async () => {
-  if (!filePickerReady) {
-    return log('⚠️ File picker belum siap.');
+fileBtn.addEventListener('click', async () => {
+  if (!fullscreenReady) {
+    return log('⚠️ Fullscreen belum siap.');
   }
-  log('📂 Membuka file picker dan masuk fullscreen...');
-  
+  log('📂 Membuka file picker dan mencoba masuk fullscreen...');
+
   // Jalankan file picker
   hiddenInput.click();
 
-  // Langsung coba masuk fullscreen
+  // Coba masuk fullscreen segera
   await tryEnterFullscreen();
 });
 
