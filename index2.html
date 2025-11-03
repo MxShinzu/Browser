@@ -1,1 +1,82 @@
-<h1>testgg</h1>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirect dalam 3 detik…</title>
+
+  <!-- Meta refresh sebagai fallback (3 detik) -->
+  <meta http-equiv="refresh" content="3;url=http://www.http2demo.io/">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef8 100%);
+      color: #0b2545;
+    }
+    .card {
+      text-align: center;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(11, 37, 69, 0.08);
+      max-width: 420px;
+      width: 90%;
+      background: white;
+    }
+    .count {
+      font-size: 48px;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid #0b2545;
+      color: #0b2545;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-live="polite">
+    <h1>Akan dialihkan</h1>
+    <p>Kamu akan dialihkan dalam</p>
+    <div class="count" id="countdown">3</div>
+    <p>Jika tidak dialihkan, klik tombol di bawah.</p>
+    <a id="manualLink" class="button" href="http://www.http2demo.io/">Lanjutkantest sekarang</a>
+  </div>
+
+  <script>
+    (function() {
+      var seconds = 3;
+      var url = "http://www.http2demo.io/";
+      var el = document.getElementById('countdown');
+      var manual = document.getElementById('manualLink');
+
+      // Update visible countdown setiap 1 detik
+      el.textContent = seconds;
+      var interval = setInterval(function() {
+        seconds -= 1;
+        if (seconds <= 0) {
+          clearInterval(interval);
+          // Gunakan replace agar tidak menambah ke history
+          window.location.replace(url);
+        } else {
+          el.textContent = seconds;
+        }
+      }, 1000);
+
+      // Pastikan link manual juga mengarah ke url
+      manual.href = url;
+    })();
+  </script>
+</body>
+</html>
