@@ -1,30 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTTP2 Demo Iframe</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DPIP opener — click anywhere</title>
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: #f2f2f2;
-      font-family: Arial, sans-serif;
-    }
-    iframe {
-      width: 90%;
-      height: 90vh;
-      border: 2px solid #444;
-      border-radius: 8px;
-    }
+    html,body { height:100%; margin:0; display:flex; align-items:center; justify-content:center; font-family:system-ui,Segoe UI,Roboto; background:#111; color:#eee; }
+    .card { text-align:center; padding:24px; border-radius:12px; background:linear-gradient(180deg,#222,#1a1a1a); box-shadow:0 6px 24px rgba(0,0,0,0.6); }
+    button { padding:10px 16px; border-radius:8px; border:0; background:#0b84ff; color:white; font-weight:600; cursor:pointer; }
+    small { opacity:0.8; display:block; margin-top:8px; }
   </style>
 </head>
 <body>
-  <iframe src="https://mxshinzu.github.io/Browser/index2.html" frameborder="0"></iframe>
-  
+  <div class="card">
+    <h2>Klik layar untuk buka DPIP → http://www.http2demo.io/</h2>
+    <button id="openBtn">Buka DPIP</button>
+    <small id="note">Jika browser tidak dukung DPIP atau mixed-content diblok, akan terbuka tab baru.</small>
+  </div>
+
+  <script>
+    const TARGET = 'http://www.http2demo.io/'; // target yang diminta
+
+    async function openDpip() {
+      // Cek dukungan
+      const dpipApi = window.documentPictureInPicture || window.window?.documentPictureInPicture;
+      if (!dpipApi || typeof dpipApi.requestWindow !== 'function') {
+        fallback();
+        return;
+      }
+
+      try {
+        // requestWindow mengembalikan Promise yang fulfill dengan Window instance PiP
+        const pipWin = await dpipApi.requestWindow({ width: 640, height: 480 });
+
+        // Buat iframe dan sisipkan ke PiP window
+        // NOTE: jika halaman utama di-HTTPS dan target HTTP, browser mungkin blok iframe (mixed-content).
+        const doc = pipWin.document;
+        // opsi styling dasar agar iframe mengisi jendela
+        const iframe = doc.createElement('iframe');
+        iframe.src = TARGET;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = '0';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+        // Kosongkan body lalu append iframe
+        doc.head.querySelectorAll('link,style').forEach(n => n.remove()); // hapus stylesheet default (opsional)
+        doc.body.style.margin = '0';
+        doc.body.style.height = '100vh';
+        doc.body.appendChild(iframe);
+
+        // optional: tangani kalau PiP window ditutup
+        pipWin.addEventListener('pagehide', () => {
+          console.log('DPIP closed');
+        });
+      } catch (err) {
+        console.warn('DPIP request failed:', err);
+        fallback();
+      }
+    }
+
+    function fallback() {
+      // fallback sederhana: buka di tab baru
+      try {
+        window.open(TARGET, '_blank', 'noopener,noreferrer');
+      } catch (e) {
+        console.error('fallback open failed', e);
+      }
+    }
+
+    // Buka saat klik tombol atau klik body
+    document.getElementById('openBtn').addEventListener('click', openDpip);
+    document.body.addEventListener('click', (e) => {
+      // hindari konflik ketika klik tombol (sudah punya listener)
+      if (e.target.id === 'openBtn') return;
+      openDpip();
+    });
+  </script>
 </body>
 </html>
