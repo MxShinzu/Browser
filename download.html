@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Demo Dua Tombol</title>
+  <title>Redirect lalu Alert</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -29,18 +29,14 @@
       cursor: pointer;
       background-color: #0078ff;
       color: white;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background-color: #005fcc;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Demo Dua Tombol</h2>
-    <button id="btn1">Tombol 1 (Alert setelah 5 detik)</button>
-    <button id="btn2" style="display:none;">Tombol 2 (Redirect ke Google)</button>
+    <h2>Redirect lalu Alert</h2>
+    <button id="btn1">Tombol 1 (Redirect 5 detik)</button>
+    <button id="btn2" style="display:none;">Tombol 2 (Alert 2 detik)</button>
   </div>
 
   <script>
@@ -48,21 +44,21 @@
     const btn2 = document.getElementById('btn2');
 
     btn1.addEventListener('click', function() {
-      // Jalankan alert setelah 5 detik
-      setTimeout(() => {
-        alert('Ini alert dari tombol pertama (setelah 5 detik)!');
-      }, 2000);
-
-      // Sembunyikan tombol 1 dan tampilkan tombol 2
       btn1.style.display = 'none';
       btn2.style.display = 'inline-block';
+
+      // 5 detik kemudian: redirect ke Google
+      setTimeout(() => {
+        window.location.href = 'https://google.com';
+        // Perhatian: kode setelah ini bisa tidak jalan karena halaman berpindah.
+        alert('Redirect ke Google telah dipanggil (mungkin tidak terlihat).');
+      }, 5000);
     });
 
     btn2.addEventListener('click', function() {
-      // Redirect ke Google setelah 2 detik
       setTimeout(() => {
-        window.location.href = 'https://google.com';
-      }, 5000);
+        alert('Ini alert dari tombol kedua!');
+      }, 2000);
     });
   </script>
 </body>
