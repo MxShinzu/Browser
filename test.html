@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Link Example</title>
+</head>
+<body>
+  <a href="#" onclick="openPopup()">Open Apple Website</a>
+
+  <script>
+    function openPopup() {
+      window.open(
+        "https://apple.com",
+        "popupWindow",
+        "width=800,height=600,scrollbars=yes,resizable=yes"
+      );
+    }
+  </script>
+</body>
+</html>
