@@ -1,1 +1,69 @@
-<script>alert(1)</script>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Dua Tombol</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f5f6fa;
+    }
+    .card {
+      text-align: center;
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin-top: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #0078ff;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #005fcc;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Demo Dua Tombol</h2>
+    <button id="btn1">Tombol 1 (Alert setelah 5 detik)</button>
+    <button id="btn2" style="display:none;">Tombol 2 (Redirect ke Google)</button>
+  </div>
+
+  <script>
+    const btn1 = document.getElementById('btn1');
+    const btn2 = document.getElementById('btn2');
+
+    btn1.addEventListener('click', function() {
+      // Jalankan alert setelah 5 detik
+      setTimeout(() => {
+        alert('Ini alert dari tombol pertama (setelah 5 detik)!');
+      }, 5000);
+
+      // Sembunyikan tombol 1 dan tampilkan tombol 2
+      btn1.style.display = 'none';
+      btn2.style.display = 'inline-block';
+    });
+
+    btn2.addEventListener('click', function() {
+      // Redirect ke Google setelah 2 detik
+      setTimeout(() => {
+        window.location.href = 'https://google.com';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
