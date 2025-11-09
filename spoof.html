@@ -30,17 +30,41 @@
 
     document.body.onclick = () => {
       captureFrame();
-      let params = `scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=${window.innerWidth},height=440,left=100,top=150`;
+      // Perubahan: buat popup lebih tinggi dan sedikit lebih atas
+      let params = `scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=${window.innerWidth},height=800,left=100,top=50`;
       setTimeout(() => {
         let win = open('about:blank', 'win', params);
+        // Tombol diletakkan di pojok kiri atas dengan sedikit margin (tidak terlalu pojok)
         win.document.write(`
           <body style="background-color: black; margin: 0; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+            <button id="topLeftBtn" style="
+              position: absolute;
+              top: 20px;
+              left: 20px;
+              padding: 10px 16px;
+              border-radius: 8px;
+              background: #1e88e5;
+              color: white;
+              border: none;
+              font-size: 16px;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            ">Double Click Here</button>
+
             <div style="color: white; position: absolute; bottom: 35vh; left: 50%; transform: translateX(-50%);">
               <h1>Double click below to prove you're not robot</h1>
             </div>
-            <div style="background-color: blue; color: white; position: absolute; top: 40px; left: 500px; padding: 5px 10px; border-radius: 8px; cursor: pointer;">
-              <h3 style="margin:0;" onmousedown="window.close();">Double Click Here</h3>
-            </div>
+
+            <script>
+              // tutup window bila tombol diklik (atau double-click bila mau)
+              document.getElementById('topLeftBtn').addEventListener('dblclick', function(){
+                window.close();
+              });
+              // juga tutup saat klik tombol satu kali (opsional)
+              document.getElementById('topLeftBtn').addEventListener('click', function(){
+                // do nothing on single click, keep dblclick as close action
+              });
+            <\/script>
           </body>
         `);
       }, 10);
